@@ -3,15 +3,8 @@ build:
 	go build -o terraform-provider-bouncr
 
 
-test_assignments: testdeps
-	BOUNCR_ACCOUNT=admin BOUNCR_PASSWORD=password TF_ACC=1 \
-	go test -v -run TestBouncrAssignments_Basic
-
-test_application: testdeps
-	BOUNCR_ACCOUNT=admin BOUNCR_PASSWORD=password TF_ACC=1 \
-	go test -v -run TestBouncrApplication_Basic
-
 test: testdeps
+	BOUNCR_ACCOUNT=admin BOUNCR_PASSWORD=password TF_ACC=1 \
 	go test -v ./...
 
 testdeps:
