@@ -18,6 +18,12 @@ func TestBouncrAssignments_Basic(t *testing.T) {
 			resource.TestStep{
 				Config: testAccCheckBouncrAssignmentsConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"bouncr_assignments.assign", "assignment.0.group", "group1"),
+					resource.TestCheckResourceAttr(
+						"bouncr_assignments.assign", "assignment.0.role", "role4"),
+					resource.TestCheckResourceAttr(
+						"bouncr_assignments.assign", "assignment.0.realm", "realm1"),
 				),
 			},
 		},

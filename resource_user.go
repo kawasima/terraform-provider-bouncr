@@ -18,6 +18,10 @@ func resourceBouncrUser() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"password": &schema.Schema {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"user_profiles": &schema.Schema{
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -39,6 +43,16 @@ func resourceUserCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	if p := d.Get("password").(string); p != "" {
+		_, err := client.CreatePasswordCredential(&bouncr.PasswordCredentialCreateRequest{
+			Account:  user.Account,
+			Password: p,
+		})
+		if err != nil {
+			return err
+		}
+	}
 	d.SetId(user.Account)
 	return resourceUserRead(d, meta)
 }
@@ -53,6 +67,7 @@ func resourceUserRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("id", user.ID)
 	d.Set("account", user.Account)
+	d.Set("user_profiles", user.UserProfiles)
 
 	return nil
 }
@@ -85,7 +100,7 @@ func resourceUserDelete(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	log.Printf("[DEBIG] bouncr application %q deleted.", d.Id())
+	log.Printf("[DEBUG] bouncr user %q deleted.", d.Id())
 	d.SetId("")
 	return nil
 }

@@ -18,6 +18,26 @@ func TestBouncrUser_Basic(t *testing.T) {
 			resource.TestStep{
 				Config: testAccCheckBouncrUserConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"bouncr_user.user1", "account", "user1"),
+				),
+			},
+		},
+
+	})
+}
+
+func TestBouncrUser_WithPassword(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckBouncrUserDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccCheckBouncrUserConfig_withPassword,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"bouncr_user.user2", "account", "user2"),
 				),
 			},
 		},
@@ -48,6 +68,17 @@ resource "bouncr_user" "user1" {
   user_profiles = {
     email = "user1@example.com"
     name  = "Test User1"
+  }
+}
+`
+
+const testAccCheckBouncrUserConfig_withPassword = `
+resource "bouncr_user" "user2" {
+  account = "user2"
+  password = "pass1234"
+  user_profiles = {
+    email = "user2@example.com"
+    name  = "Test User2"
   }
 }
 `

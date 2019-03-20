@@ -18,6 +18,10 @@ func TestBouncrGroup_Basic(t *testing.T) {
 			resource.TestStep{
 				Config: testAccCheckBouncrGroupConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"bouncr_group.group1", "name", "group1"),
+					resource.TestCheckResourceAttr(
+						"bouncr_group.group1", "members.#", "1"),
 				),
 			},
 		},

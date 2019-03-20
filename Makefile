@@ -3,6 +3,10 @@ build:
 	go build -o terraform-provider-bouncr
 
 
+test_user: testdeps
+	BOUNCR_ACCOUNT=admin BOUNCR_PASSWORD=password TF_ACC=1 \
+	go test -v ./... -run TestBouncrUser_
+
 test: testdeps
 	BOUNCR_ACCOUNT=admin BOUNCR_PASSWORD=password TF_ACC=1 \
 	go test -v ./...
