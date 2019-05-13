@@ -12,6 +12,10 @@ func resourceBouncrGroup() *schema.Resource {
 		Read:   resourceGroupRead,
 		Update: resourceGroupUpdate,
 		Delete: resourceGroupDelete,
+		Exists: resourceGroupExists,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -66,6 +70,17 @@ func resourceGroupRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("description", group.Description)
 
 	return nil
+}
+
+func resourceGroupExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	client := meta.(*bouncr.Client)
+
+	group, err := client.FindGroup(d.Id())
+
+	if err != nil {
+		return false, err
+	}
+	return bool(group.Name != ""), nil
 }
 
 func resourceGroupUpdate(d *schema.ResourceData, meta interface{}) error {

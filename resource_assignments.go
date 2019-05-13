@@ -12,6 +12,9 @@ func resourceBouncrAssignments() *schema.Resource {
 		Read:   resourceAssignmentsRead,
 		Update: resourceAssignmentsUpdate,
 		Delete: resourceAssignmentsDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"assignment": &schema.Schema{
@@ -93,6 +96,7 @@ func resourceAssignmentsRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	return nil
 }
+
 
 func resourceAssignmentsUpdate(d *schema.ResourceData, meta interface{}) error {
 	return nil

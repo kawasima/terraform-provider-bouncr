@@ -34,6 +34,7 @@ func Provider() terraform.ResourceProvider {
 			"bouncr_role":        resourceBouncrRole(),
 			"bouncr_permission":  resourceBouncrPermission(),
 			"bouncr_assignments": resourceBouncrAssignments(),
+			"bouncr_oidc_provider": resourceBouncrOidcProvider(),
 		},
 		ConfigureFunc: providerConfigure,
 	}

@@ -12,6 +12,10 @@ func resourceBouncrPermission() *schema.Resource {
 		Read:   resourcePermissionRead,
 		Update: resourcePermissionUpdate,
 		Delete: resourcePermissionDelete,
+		Exists: resourcePermissionExists,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -55,6 +59,17 @@ func resourcePermissionRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("description", permission.Description)
 
 	return nil
+}
+
+func resourcePermissionExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	client := meta.(*bouncr.Client)
+
+	permission, err := client.FindPermission(d.Id())
+
+	if err != nil {
+		return false, err
+	}
+	return bool(permission.Name != ""), nil
 }
 
 func resourcePermissionUpdate(d *schema.ResourceData, meta interface{}) error {

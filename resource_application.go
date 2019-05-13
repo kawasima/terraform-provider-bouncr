@@ -12,6 +12,10 @@ func resourceBouncrApplication() *schema.Resource {
 		Read:   resourceApplicationRead,
 		Update: resourceApplicationUpdate,
 		Delete: resourceApplicationDelete,
+		Exists: resourceApplicationExists,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -98,7 +102,7 @@ func resourceApplicationCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceApplicationRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*bouncr.Client)
 
-	application, err := client.FindApplication(d.Get("name").(string))
+	application, err := client.FindApplication(d.Id())
 	if err != nil {
 		return err
 	}
@@ -111,6 +115,17 @@ func resourceApplicationRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("top_page", application.TopPage)
 
 	return nil
+}
+
+func resourceApplicationExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	client := meta.(*bouncr.Client)
+
+	application, err := client.FindApplication(d.Id())
+
+	if err != nil {
+		return false, err
+	}
+	return bool(application.Name != ""), nil
 }
 
 func resourceApplicationUpdate(d *schema.ResourceData, meta interface{}) error {

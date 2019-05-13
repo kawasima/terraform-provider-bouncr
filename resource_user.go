@@ -12,6 +12,10 @@ func resourceBouncrUser() *schema.Resource {
 		Read:   resourceUserRead,
 		Update: resourceUserUpdate,
 		Delete: resourceUserDelete,
+		Exists: resourceUserExists,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"account": &schema.Schema{
@@ -70,6 +74,17 @@ func resourceUserRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("user_profiles", user.UserProfiles)
 
 	return nil
+}
+
+func resourceUserExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	client := meta.(*bouncr.Client)
+
+	user, err := client.FindUser(d.Id())
+
+	if err != nil {
+		return false, err
+	}
+	return bool(user.Account != ""), nil
 }
 
 func resourceUserUpdate(d *schema.ResourceData, meta interface{}) error {

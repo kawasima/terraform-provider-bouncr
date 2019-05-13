@@ -12,6 +12,10 @@ func resourceBouncrRole() *schema.Resource {
 		Read:   resourceRoleRead,
 		Update: resourceRoleUpdate,
 		Delete: resourceRoleDelete,
+		Exists: resourceRoleExists,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -65,6 +69,17 @@ func resourceRoleRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("description", role.Description)
 
 	return nil
+}
+
+func resourceRoleExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	client := meta.(*bouncr.Client)
+
+	role, err := client.FindRole(d.Id())
+
+	if err != nil {
+		return false, err
+	}
+	return bool(role.Name != ""), nil
 }
 
 func resourceRoleUpdate(d *schema.ResourceData, meta interface{}) error {
