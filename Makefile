@@ -10,9 +10,11 @@ TERRAFORM_PLUGIN_DIR=$(HOME)/.terraform.d/plugins/$(OS)_$(ARCH)
 
 build: $(TARGET_BINARY)
 
-$(TARGET_BINARY):
-	go build -o $(TARGET_BINARY)
+deps:
+	dep ensure
 
+$(TARGET_BINARY): deps
+	go build -o $(TARGET_BINARY)
 
 test_oidc_provider: testdeps
 	BOUNCR_ACCOUNT=admin BOUNCR_PASSWORD=password TF_ACC=1 \
