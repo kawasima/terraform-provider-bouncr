@@ -12,3 +12,4 @@
 *.out
 
 /terraform-provider-bouncr*
+/vendor/
