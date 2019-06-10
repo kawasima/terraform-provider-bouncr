@@ -52,6 +52,7 @@ func resourceUserCreate(d *schema.ResourceData, meta interface{}) error {
 		_, err := client.CreatePasswordCredential(&bouncr.PasswordCredentialCreateRequest{
 			Account:  user.Account,
 			Password: p,
+			Initial:  false,
 		})
 		if err != nil {
 			return err
