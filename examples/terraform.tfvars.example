@@ -1,0 +1,3 @@
+bouncr_client_id     = "your-client-id"
+bouncr_client_secret = "your-client-secret"
+bouncr_base_url      = "http://localhost:3000"
