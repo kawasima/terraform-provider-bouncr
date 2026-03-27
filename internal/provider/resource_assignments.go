@@ -196,6 +196,9 @@ func (r *assignmentsResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	err := r.client.DeleteAssignments(ctx, &assignmentsRequest)
+	if isNotFound(err) {
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Error deleting assignments", err.Error())
 	}

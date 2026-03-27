@@ -6,6 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/kawasima/bouncr-client-go"
 )
@@ -42,6 +44,9 @@ func (r *userResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 			"password": schema.StringAttribute{
 				Optional:  true,
 				Sensitive: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"user_profiles": schema.MapAttribute{
 				Optional:    true,
@@ -187,6 +192,9 @@ func (r *userResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 	}
 
 	err := r.client.DeleteUser(ctx, state.Account.ValueString())
+	if isNotFound(err) {
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Error deleting user", err.Error())
 	}

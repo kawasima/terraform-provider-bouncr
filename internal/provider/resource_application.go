@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -33,14 +32,6 @@ type realmModel struct {
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
 	URL         types.String `tfsdk:"url"`
-}
-
-func realmAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"name":        types.StringType,
-		"description": types.StringType,
-		"url":         types.StringType,
-	}
 }
 
 func NewApplicationResource() resource.Resource {
@@ -193,6 +184,50 @@ func (r *applicationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
+	var oldRealms, newRealms []realmModel
+	if !state.Realms.IsNull() {
+		resp.Diagnostics.Append(state.Realms.ElementsAs(ctx, &oldRealms, false)...)
+	}
+	if !plan.Realms.IsNull() {
+		resp.Diagnostics.Append(plan.Realms.ElementsAs(ctx, &newRealms, false)...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	oldRealmNames := make(map[string]bool)
+	for _, r := range oldRealms {
+		oldRealmNames[r.Name.ValueString()] = true
+	}
+	newRealmNames := make(map[string]bool)
+	for _, r := range newRealms {
+		newRealmNames[r.Name.ValueString()] = true
+	}
+
+	appName := plan.Name.ValueString()
+	for _, realm := range newRealms {
+		if !oldRealmNames[realm.Name.ValueString()] {
+			_, err := r.client.CreateRealm(ctx, appName, &bouncr.RealmCreateRequest{
+				Name:        realm.Name.ValueString(),
+				Description: realm.Description.ValueString(),
+				URL:         realm.URL.ValueString(),
+			})
+			if err != nil {
+				resp.Diagnostics.AddError("Error creating realm", err.Error())
+				return
+			}
+		}
+	}
+	for _, realm := range oldRealms {
+		if !newRealmNames[realm.Name.ValueString()] {
+			err := r.client.DeleteRealm(ctx, appName, realm.Name.ValueString())
+			if err != nil && !isNotFound(err) {
+				resp.Diagnostics.AddError("Error deleting realm", err.Error())
+				return
+			}
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -204,6 +239,9 @@ func (r *applicationResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	err := r.client.DeleteApplication(ctx, state.Name.ValueString())
+	if isNotFound(err) {
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Error deleting application", err.Error())
 	}

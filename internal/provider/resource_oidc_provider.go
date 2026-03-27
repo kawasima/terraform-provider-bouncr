@@ -202,6 +202,9 @@ func (r *oidcProviderResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	err := r.client.DeleteOidcProvider(ctx, state.Name.ValueString())
+	if isNotFound(err) {
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Error deleting OIDC provider", err.Error())
 	}

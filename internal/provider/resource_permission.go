@@ -131,6 +131,9 @@ func (r *permissionResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	err := r.client.DeletePermission(ctx, state.Name.ValueString())
+	if isNotFound(err) {
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Error deleting permission", err.Error())
 	}

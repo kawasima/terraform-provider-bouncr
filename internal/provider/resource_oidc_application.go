@@ -187,6 +187,9 @@ func (r *oidcApplicationResource) Delete(ctx context.Context, req resource.Delet
 	}
 
 	err := r.client.DeleteOidcApplication(ctx, state.Name.ValueString())
+	if isNotFound(err) {
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Error deleting OIDC application", err.Error())
 	}

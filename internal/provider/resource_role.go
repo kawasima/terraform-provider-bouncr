@@ -134,6 +134,34 @@ func (r *roleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
+	var oldPerms, newPerms []string
+	if !state.Permissions.IsNull() {
+		resp.Diagnostics.Append(state.Permissions.ElementsAs(ctx, &oldPerms, false)...)
+	}
+	if !plan.Permissions.IsNull() {
+		resp.Diagnostics.Append(plan.Permissions.ElementsAs(ctx, &newPerms, false)...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	toAdd, toRemove := diffStringSets(oldPerms, newPerms)
+	roleName := plan.Name.ValueString()
+	if len(toAdd) > 0 {
+		_, err := r.client.AddPermissionsToRole(ctx, roleName, &toAdd)
+		if err != nil {
+			resp.Diagnostics.AddError("Error adding permissions to role", err.Error())
+			return
+		}
+	}
+	if len(toRemove) > 0 {
+		err := r.client.RemovePermissionsFromRole(ctx, roleName, &toRemove)
+		if err != nil {
+			resp.Diagnostics.AddError("Error removing permissions from role", err.Error())
+			return
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -145,6 +173,9 @@ func (r *roleResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 	}
 
 	err := r.client.DeleteRole(ctx, state.Name.ValueString())
+	if isNotFound(err) {
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Error deleting role", err.Error())
 	}

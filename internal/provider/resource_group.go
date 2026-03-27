@@ -134,6 +134,34 @@ func (r *groupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
+	var oldMembers, newMembers []string
+	if !state.Members.IsNull() {
+		resp.Diagnostics.Append(state.Members.ElementsAs(ctx, &oldMembers, false)...)
+	}
+	if !plan.Members.IsNull() {
+		resp.Diagnostics.Append(plan.Members.ElementsAs(ctx, &newMembers, false)...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	toAdd, toRemove := diffStringSets(oldMembers, newMembers)
+	groupName := plan.Name.ValueString()
+	if len(toAdd) > 0 {
+		_, err := r.client.AddUsersToGroup(ctx, groupName, &toAdd)
+		if err != nil {
+			resp.Diagnostics.AddError("Error adding members to group", err.Error())
+			return
+		}
+	}
+	if len(toRemove) > 0 {
+		err := r.client.RemoveUsersFromGroup(ctx, groupName, &toRemove)
+		if err != nil {
+			resp.Diagnostics.AddError("Error removing members from group", err.Error())
+			return
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -145,6 +173,9 @@ func (r *groupResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	}
 
 	err := r.client.DeleteGroup(ctx, state.Name.ValueString())
+	if isNotFound(err) {
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("Error deleting group", err.Error())
 	}
