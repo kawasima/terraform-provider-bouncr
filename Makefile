@@ -1,35 +1,29 @@
-VERSION=v0.1.0
-ARCH=amd64
-OS=linux
+HOSTNAME=registry.terraform.io
+NAMESPACE=kawasima
+NAME=bouncr
+BINARY=terraform-provider-${NAME}
+VERSION=0.2.0
+OS_ARCH=$(shell go env GOOS)_$(shell go env GOARCH)
 
-TARGET_BINARY=terraform-provider-bouncr_$(VERSION)
+default: build
 
-TERRAFORM_PLUGIN_DIR=$(HOME)/.terraform.d/plugins/$(OS)_$(ARCH)
+build:
+	go build -o ${BINARY}
 
-.PHONY: $(TARGET_BINARY)
+install: build
+	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
+	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}/
 
-build: $(TARGET_BINARY)
+test:
+	go test ./... -v
 
-deps:
-	dep ensure
+testacc:
+	TF_ACC=1 go test ./... -v
 
-$(TARGET_BINARY): deps
-	go build -o $(TARGET_BINARY)
+fmt:
+	go fmt ./...
 
-test_oidc_provider: testdeps
-	BOUNCR_ACCOUNT=admin BOUNCR_PASSWORD=password TF_ACC=1 \
-	go test -v ./... -run TestBouncrOidcProvider_
+lint:
+	golangci-lint run ./...
 
-test: testdeps
-	BOUNCR_ACCOUNT=admin BOUNCR_PASSWORD=password TF_ACC=1 \
-	go test -v ./...
-
-testdeps:
-	go get -d -v -t ./...
-	go get golang.org/x/lint/golint \
-		golang.org/x/tools/cmd/cover \
-		github.com/axw/gocov/gocov \
-
-install_plugin_locally: $(TARGET_BINARY)
-	mkdir -p $(TERRAFORM_PLUGIN_DIR)
-	cp ./$(TARGET_BINARY) $(TERRAFORM_PLUGIN_DIR)/
+.PHONY: build install test testacc fmt lint
