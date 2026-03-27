@@ -195,20 +195,33 @@ func (r *applicationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	oldRealmNames := make(map[string]bool)
+	oldRealmMap := make(map[string]realmModel)
 	for _, r := range oldRealms {
-		oldRealmNames[r.Name.ValueString()] = true
+		oldRealmMap[r.Name.ValueString()] = r
 	}
-	newRealmNames := make(map[string]bool)
+	newRealmMap := make(map[string]realmModel)
 	for _, r := range newRealms {
-		newRealmNames[r.Name.ValueString()] = true
+		newRealmMap[r.Name.ValueString()] = r
 	}
 
 	appName := plan.Name.ValueString()
 	for _, realm := range newRealms {
-		if !oldRealmNames[realm.Name.ValueString()] {
+		name := realm.Name.ValueString()
+		if old, exists := oldRealmMap[name]; exists {
+			if old.Description.ValueString() != realm.Description.ValueString() || old.URL.ValueString() != realm.URL.ValueString() {
+				_, err := r.client.UpdateRealm(ctx, appName, name, &bouncr.RealmUpdateRequest{
+					Name:        name,
+					Description: realm.Description.ValueString(),
+					URL:         realm.URL.ValueString(),
+				})
+				if err != nil {
+					resp.Diagnostics.AddError("Error updating realm", err.Error())
+					return
+				}
+			}
+		} else {
 			_, err := r.client.CreateRealm(ctx, appName, &bouncr.RealmCreateRequest{
-				Name:        realm.Name.ValueString(),
+				Name:        name,
 				Description: realm.Description.ValueString(),
 				URL:         realm.URL.ValueString(),
 			})
@@ -219,7 +232,7 @@ func (r *applicationResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 	}
 	for _, realm := range oldRealms {
-		if !newRealmNames[realm.Name.ValueString()] {
+		if _, exists := newRealmMap[realm.Name.ValueString()]; !exists {
 			err := r.client.DeleteRealm(ctx, appName, realm.Name.ValueString())
 			if err != nil && !isNotFound(err) {
 				resp.Diagnostics.AddError("Error deleting realm", err.Error())
